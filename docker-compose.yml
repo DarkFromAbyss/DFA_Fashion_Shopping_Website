@@ -1,0 +1,37 @@
+
+version: '3.8'
+
+services:
+  # PostgreSQL database service
+  db:
+    image: postgres:14-alpine
+    restart: always
+    environment:
+      POSTGRES_USER: "postgres"
+      POSTGRES_PASSWORD: "12345"
+      POSTGRES_DB: "demo"
+    volumes:
+      # Persist DB data
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+
+  # Backend Node.js service
+  backend-app:
+    build:
+      context: . # build from Dockerfile in current directory
+    depends_on:
+      - db # ensure db starts first
+    restart: unless-stopped
+    ports:
+      - "3000:3000" # expose backend on port 3000
+    environment:
+      # DB connection for backend
+      DB_HOST: "db"
+      DB_USER: "postgres"
+      DB_PASSWORD: "12345"
+      DB_NAME: "demo"
+      DB_PORT: "5432"
+
+volumes:
+  postgres_data:

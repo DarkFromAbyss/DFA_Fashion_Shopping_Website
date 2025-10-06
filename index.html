@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Đăng Nhập & Đăng Ký</title>
+    <!-- Tải Tailwind CSS để thiết kế đơn giản và đẹp mắt -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    },
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background-color: #f3f4f6; /* Gray-100 */
+        }
+    </style>
+</head>
+<body class="font-sans">
+
+    <div class="p-8 bg-white shadow-xl rounded-2xl w-full max-w-sm">
+        <h1 class="text-3xl font-bold text-center text-gray-800 mb-6">Chào mừng</h1>
+
+        <div class="space-y-4">
+            <!-- Nút Đăng Nhập -->
+            <button id="openLoginBtn"
+                    class="w-full py-3 px-4 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-xl transition duration-300 transform hover:scale-[1.02] shadow-lg focus:outline-none focus:ring-4 focus:ring-blue-300">
+                Đăng Nhập
+            </button>
+
+            <!-- Nút Đăng Ký -->
+            <button id="openRegisterBtn"
+                    class="w-full py-3 px-4 bg-gray-500 hover:bg-gray-600 text-white font-semibold rounded-xl transition duration-300 transform hover:scale-[1.02] shadow-lg focus:outline-none focus:ring-4 focus:ring-gray-300">
+                Đăng Ký
+            </button>
+        </div>
+
+        <!-- Khu vực hiển thị thông báo -->
+        <p id="message" class="mt-6 text-center text-sm font-medium text-gray-700"></p>
+    </div>
+
+    <!-- Login Modal -->
+    <div id="loginModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center">
+        <div class="bg-white rounded-lg p-6 w-full max-w-md mx-4 shadow-lg">
+            <h2 class="text-2xl font-semibold mb-4">Đăng Nhập</h2>
+            <div class="space-y-3">
+                <input id="loginUsername" class="w-full px-3 py-2 border rounded" placeholder="Tên người dùng" />
+                <input id="loginPassword" type="password" class="w-full px-3 py-2 border rounded" placeholder="Mật khẩu" />
+                <div class="flex justify-end space-x-3">
+                    <button id="loginCancel" class="px-4 py-2 rounded bg-gray-200">Hủy</button>
+                    <button id="loginSubmit" class="px-4 py-2 rounded bg-blue-600 text-white">Đăng Nhập</button>
+                </div>
+                <p id="loginMsg" class="text-sm"></p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Register Modal -->
+    <div id="registerModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center">
+        <div class="bg-white rounded-lg p-6 w-full max-w-md mx-4 shadow-lg">
+            <h2 class="text-2xl font-semibold mb-4">Đăng Ký</h2>
+            <div class="space-y-3">
+                <input id="regUsername" class="w-full px-3 py-2 border rounded" placeholder="Tên người dùng" />
+                <input id="regEmail" class="w-full px-3 py-2 border rounded" placeholder="Email" />
+                <input id="regPassword" type="password" class="w-full px-3 py-2 border rounded" placeholder="Mật khẩu" />
+                <div class="flex justify-end space-x-3">
+                    <button id="regCancel" class="px-4 py-2 rounded bg-gray-200">Hủy</button>
+                    <button id="regSubmit" class="px-4 py-2 rounded bg-green-600 text-white">Đăng Ký</button>
+                </div>
+                <p id="regMsg" class="text-sm"></p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Địa chỉ giả lập của API backend Node.js/Express
+        const API_BASE_URL = 'http://localhost:3000/api';
+
+        /**
+         * Cập nhật thông báo trên giao diện
+         * @param {string} text - Nội dung thông báo
+         * @param {string} color - Màu sắc của thông báo (tailwind class)
+         */
+        function updateMessage(text, color) {
+            const messageElement = document.getElementById('message');
+            messageElement.textContent = text;
+            messageElement.className = 'mt-6 text-center text-sm font-medium ' + color;
+        }
+
+        /**
+         * Xử lý sự kiện Đăng nhập
+         */
+        // Legacy single-click handler kept for backward compatibility (not used when modals are open)
+        async function handleLogin() {
+            updateMessage('Đang gửi yêu cầu Đăng nhập đến backend...', 'text-yellow-600');
+            try {
+                const response = await fetch(`${API_BASE_URL}/login`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username: 'testuser', password: 'password123' })
+                });
+                if (response.ok) {
+                    const data = await response.json();
+                    updateMessage(`Đăng nhập thành công! Phản hồi từ Server: ${JSON.stringify(data)}`, 'text-green-600');
+                } else {
+                    const errorData = await response.json();
+                    updateMessage(`Đăng nhập thất bại. Lỗi: ${errorData.message || response.statusText}`, 'text-red-600');
+                }
+            } catch (error) {
+                console.error('Lỗi khi fetch API login:', error);
+                updateMessage('Lỗi kết nối. Vui lòng đảm bảo máy chủ backend (Node.js/Docker) đang chạy trên cổng 3000.', 'text-red-700 font-bold');
+            }
+        }
+
+        /**
+         * Xử lý sự kiện Đăng ký
+         */
+        async function handleRegister() {
+            updateMessage('Đang gửi yêu cầu Đăng ký đến backend...', 'text-yellow-600');
+            try {
+                const response = await fetch(`${API_BASE_URL}/register`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username: 'newuser', email: 'new@example.com', password: 'securepassword' })
+                });
+                if (response.ok) {
+                    const data = await response.json();
+                    updateMessage(`Đăng ký thành công! Phản hồi từ Server: ${JSON.stringify(data)}`, 'text-green-600');
+                } else {
+                    const errorData = await response.json();
+                    updateMessage(`Đăng ký thất bại. Lỗi: ${errorData.message || response.statusText}`, 'text-red-600');
+                }
+            } catch (error) {
+                console.error('Lỗi khi fetch API register:', error);
+                updateMessage('Lỗi kết nối. Vui lòng đảm bảo máy chủ backend (Node.js/Docker) đang chạy trên cổng 3000.', 'text-red-700 font-bold');
+            }
+        }
+
+        // --- Modal wiring & form submission ---
+        const openLoginBtn = document.getElementById('openLoginBtn');
+        const openRegisterBtn = document.getElementById('openRegisterBtn');
+        const loginModal = document.getElementById('loginModal');
+        const registerModal = document.getElementById('registerModal');
+
+        // Login elements
+        const loginUsername = document.getElementById('loginUsername');
+        const loginPassword = document.getElementById('loginPassword');
+        const loginSubmit = document.getElementById('loginSubmit');
+        const loginCancel = document.getElementById('loginCancel');
+        const loginMsg = document.getElementById('loginMsg');
+
+        // Register elements
+        const regUsername = document.getElementById('regUsername');
+        const regEmail = document.getElementById('regEmail');
+        const regPassword = document.getElementById('regPassword');
+        const regSubmit = document.getElementById('regSubmit');
+        const regCancel = document.getElementById('regCancel');
+        const regMsg = document.getElementById('regMsg');
+
+        function showModal(modal) {
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+        }
+
+        function closeModal(modal) {
+            modal.classList.remove('flex');
+            modal.classList.add('hidden');
+        }
+
+        openLoginBtn.addEventListener('click', () => {
+            loginUsername.value = '';
+            loginPassword.value = '';
+            loginMsg.textContent = '';
+            showModal(loginModal);
+        });
+
+        openRegisterBtn.addEventListener('click', () => {
+            regUsername.value = '';
+            regEmail.value = '';
+            regPassword.value = '';
+            regMsg.textContent = '';
+            showModal(registerModal);
+        });
+
+        loginCancel.addEventListener('click', () => closeModal(loginModal));
+        regCancel.addEventListener('click', () => closeModal(registerModal));
+
+        // Submit login form
+        loginSubmit.addEventListener('click', async () => {
+            const u = loginUsername.value.trim();
+            const p = loginPassword.value;
+            if (!u || !p) { loginMsg.textContent = 'Vui lòng nhập tên người dùng và mật khẩu.'; return; }
+            loginMsg.textContent = 'Đang xử lý...';
+            try {
+                const res = await fetch(`${API_BASE_URL}/login`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username: u, password: p })
+                });
+                const data = await res.json();
+                if (res.ok) {
+                    closeModal(loginModal);
+                    updateMessage('Đăng nhập thành công!', 'text-green-600');
+                } else {
+                    loginMsg.textContent = data.message || 'Đăng nhập thất bại.';
+                }
+            } catch (err) {
+                loginMsg.textContent = 'Lỗi kết nối đến máy chủ.';
+            }
+        });
+
+        // Submit register form
+        regSubmit.addEventListener('click', async () => {
+            const u = regUsername.value.trim();
+            const e = regEmail.value.trim();
+            const p = regPassword.value;
+            if (!u || !p || !e) { regMsg.textContent = 'Vui lòng điền đầy đủ thông tin.'; return; }
+            regMsg.textContent = 'Đang xử lý...';
+            try {
+                const res = await fetch(`${API_BASE_URL}/register`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username: u, email: e, password: p })
+                });
+                const data = await res.json();
+                if (res.ok) {
+                    closeModal(registerModal);
+                    updateMessage('Đăng ký thành công! Vui lòng đăng nhập.', 'text-green-600');
+                } else {
+                    regMsg.textContent = data.message || 'Đăng ký thất bại.';
+                }
+            } catch (err) {
+                regMsg.textContent = 'Lỗi kết nối đến máy chủ.';
+            }
+        });
+    </script>
+</body>
+</html>
