@@ -73,9 +73,3 @@ Tips for production:
 - Consider enabling rate-limiting, IP whitelisting, and connection limits in nginx.
 - Use process manager (pm2, systemd) to keep the Node server running.
 
-If you want, I can:
-- Add Docker instructions to mount certs into the backend container and set env vars.
-- Add an example `docker-compose.prod.yml` with nginx service, certs, and backend.
-- Automatically generate a self-signed cert at container start (not recommended for production).
-
-Which of these would you like next?
