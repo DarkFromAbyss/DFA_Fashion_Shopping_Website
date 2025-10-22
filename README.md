@@ -1,3 +1,77 @@
+Chạy website bằng Docker (PowerShell)
+
+Yêu cầu
+- Docker Desktop đã được cài và chạy
+- Docker Compose (thường có sẵn cùng Docker Desktop)
+
+Nhanh (copy/paste vào PowerShell)
+
+```powershell
+# Từ thư mục project
+cd C:\Users\PC\Desktop\DFA_Fashion_Shopping_Website
+
+# Khởi động Docker Desktop nếu chưa chạy (mở ứng dụng Docker Desktop từ Start Menu)
+
+# Build và chạy các container ở chế độ nền
+docker-compose up --build -d
+
+# Kiểm tra trạng thái container
+docker-compose ps
+
+# Xem logs (theo dõi realtime)
+docker-compose logs -f
+
+# Dừng và xóa container (giữ volume dữ liệu)
+docker-compose down
+
+# Dừng và xóa container kèm volumes (xóa dữ liệu DB)
+docker-compose down -v
+```
+
+Các bước chi tiết
+
+1. Mở PowerShell và điều hướng đến thư mục chứa project:
+
+```powershell
+cd C:\Users\PC\Desktop\DFA_Fashion_Shopping_Website
+```
+
+2. Nếu Docker Desktop chưa chạy: mở ứng dụng Docker Desktop từ Start Menu và chờ cho đến khi Docker sẵn sàng.
+
+3. Chạy lệnh sau để build image backend và khởi động các dịch vụ (Postgres + backend):
+
+```powershell
+docker-compose up --build -d
+```
+
+4. Kiểm tra các container đang chạy:
+
+```powershell
+docker-compose ps
+```
+
+5. Mở trình duyệt và truy cập:
+
+http://localhost:3000
+
+6. Khi cần debug, xem logs:
+
+```powershell
+docker-compose logs backend-app
+docker-compose logs db
+```
+
+Xử lý sự cố thường gặp
+- Lỗi kết nối tới Docker daemon (ví dụ: "unable to get image" hay pipe errors): đảm bảo Docker Desktop đang chạy và bạn đã đăng nhập nếu cần.
+- Port 3000 hoặc 5432 đang bị chiếm: kiểm tra tiến trình cục bộ, hoặc sửa lại port mapping trong `docker-compose.yml`.
+- Nếu muốn reset toàn bộ dữ liệu Postgres (sẽ xóa DB):
+
+```powershell
+docker-compose down -v
+```
+
+---
+
 Local HTTPS and reverse-proxy (nginx) guide
 
 This project includes an Express backend (`server.js`) that can run over HTTP or optionally HTTPS using self-signed certificates for local testing.
