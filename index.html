@@ -44,6 +44,10 @@
                     class="w-full py-3 px-4 bg-gray-500 hover:bg-gray-600 text-white font-semibold rounded-xl transition duration-300 transform hover:scale-[1.02] shadow-lg focus:outline-none focus:ring-4 focus:ring-gray-300">
                 Đăng Ký
             </button>
+            <!-- Link Quên mật khẩu -->
+            <div class="mt-3 text-center">
+                <button id="openForgotBtn" class="text-sm text-blue-600 hover:underline">Quên mật khẩu?</button>
+            </div>
         </div>
 
         <!-- Khu vực hiển thị thông báo -->
@@ -55,13 +59,29 @@
         <div class="bg-white rounded-lg p-6 w-full max-w-md mx-4 shadow-lg">
             <h2 class="text-2xl font-semibold mb-4">Đăng Nhập</h2>
             <div class="space-y-3">
-                <input id="loginUsername" class="w-full px-3 py-2 border rounded" placeholder="Tên người dùng" />
+                <input id="loginUsername" class="w-full px-3 py-2 border rounded" placeholder="Tên người dùng hoặc Email" />
                 <input id="loginPassword" type="password" class="w-full px-3 py-2 border rounded" placeholder="Mật khẩu" />
                 <div class="flex justify-end space-x-3">
                     <button id="loginCancel" class="px-4 py-2 rounded bg-gray-200">Hủy</button>
                     <button id="loginSubmit" class="px-4 py-2 rounded bg-blue-600 text-white">Đăng Nhập</button>
                 </div>
                 <p id="loginMsg" class="text-sm"></p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Forgot Password Modal -->
+    <div id="forgotModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center">
+        <div class="bg-white rounded-lg p-6 w-full max-w-md mx-4 shadow-lg">
+            <h2 class="text-2xl font-semibold mb-4">Quên mật khẩu</h2>
+            <div class="space-y-3">
+                <p class="text-sm">Nhập email đã đăng ký để nhận liên kết đặt lại mật khẩu.</p>
+                <input id="forgotEmail" class="w-full px-3 py-2 border rounded" placeholder="Email" />
+                <div class="flex justify-end space-x-3">
+                    <button id="forgotCancel" class="px-4 py-2 rounded bg-gray-200">Hủy</button>
+                    <button id="forgotSubmit" class="px-4 py-2 rounded bg-blue-600 text-white">Gửi</button>
+                </div>
+                <p id="forgotMsg" class="text-sm"></p>
             </div>
         </div>
     </div>
@@ -108,7 +128,7 @@
                 const response = await fetch(`${API_BASE_URL}/login`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ username: 'testuser', password: 'password123' })
+                    body: JSON.stringify({ login: 'testuser', password: 'password123' })
                 });
                 if (response.ok) {
                     const data = await response.json();
@@ -168,6 +188,14 @@
         const regCancel = document.getElementById('regCancel');
         const regMsg = document.getElementById('regMsg');
 
+    // Forgot password elements
+    const openForgotBtn = document.getElementById('openForgotBtn');
+    const forgotModal = document.getElementById('forgotModal');
+    const forgotEmail = document.getElementById('forgotEmail');
+    const forgotSubmit = document.getElementById('forgotSubmit');
+    const forgotCancel = document.getElementById('forgotCancel');
+    const forgotMsg = document.getElementById('forgotMsg');
+
         function showModal(modal) {
             modal.classList.remove('hidden');
             modal.classList.add('flex');
@@ -193,20 +221,27 @@
             showModal(registerModal);
         });
 
+        openForgotBtn.addEventListener('click', () => {
+            forgotEmail.value = '';
+            forgotMsg.textContent = '';
+            showModal(forgotModal);
+        });
+
         loginCancel.addEventListener('click', () => closeModal(loginModal));
         regCancel.addEventListener('click', () => closeModal(registerModal));
+    forgotCancel.addEventListener('click', () => closeModal(forgotModal));
 
         // Submit login form
         loginSubmit.addEventListener('click', async () => {
             const u = loginUsername.value.trim();
             const p = loginPassword.value;
-            if (!u || !p) { loginMsg.textContent = 'Vui lòng nhập tên người dùng và mật khẩu.'; return; }
+            if (!u || !p) { loginMsg.textContent = 'Vui lòng nhập tên người dùng/email và mật khẩu.'; return; }
             loginMsg.textContent = 'Đang xử lý...';
             try {
                 const res = await fetch(`${API_BASE_URL}/login`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ username: u, password: p })
+                    body: JSON.stringify({ login: u, password: p })
                 });
                 const data = await res.json();
                 if (res.ok) {
@@ -242,6 +277,32 @@
                 }
             } catch (err) {
                 regMsg.textContent = 'Lỗi kết nối đến máy chủ.';
+            }
+        });
+
+        // Forgot password submit
+        forgotSubmit.addEventListener('click', async () => {
+            const e = forgotEmail.value.trim();
+            if (!e) { forgotMsg.textContent = 'Vui lòng nhập email.'; return; }
+            forgotMsg.textContent = 'Đang gửi...';
+            try {
+                const res = await fetch(`${API_BASE_URL}/forgot-password`, {
+                    method: 'POST', headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email: e })
+                });
+                const data = await res.json();
+                // luôn hiện thông báo trung lập để tránh tiết lộ tồn tại email
+                if (res.ok) {
+                    forgotMsg.className = 'text-green-600';
+                    forgotMsg.textContent = data.message || 'Nếu email tồn tại, liên kết đã được gửi.';
+                    setTimeout(() => closeModal(forgotModal), 2500);
+                } else {
+                    forgotMsg.className = 'text-red-600';
+                    forgotMsg.textContent = data.message || 'Lỗi khi gửi email.';
+                }
+            } catch (err) {
+                forgotMsg.className = 'text-red-600';
+                forgotMsg.textContent = 'Lỗi kết nối đến máy chủ.';
             }
         });
     </script>
