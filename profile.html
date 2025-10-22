@@ -1,0 +1,283 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Hồ sơ</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="flex items-center justify-center min-h-screen bg-gray-100">
+  <div class="bg-white rounded shadow-md w-full max-w-4xl p-6">
+    <div class="flex">
+      <!-- Left vertical taskbar (visually separated) -->
+      <nav class="w-56 mr-6 bg-white p-3 rounded border shadow-sm">
+        <ul class="space-y-2">
+          <li><button id="tabProfile" class="w-full text-left px-4 py-2 rounded hover:bg-gray-100">Hồ sơ</button></li>
+          <li><button id="tabAddress" class="w-full text-left px-4 py-2 rounded hover:bg-gray-100">Địa chỉ</button></li>
+          <li><button id="tabCredentials" class="w-full text-left px-4 py-2 rounded hover:bg-gray-100">Đổi thông tin đăng nhập</button></li>
+        </ul>
+      </nav>
+
+      <!-- Content area -->
+      <div class="flex-1">
+        <div class="flex items-center justify-between mb-4">
+          <h1 class="text-xl font-semibold">Quản lý tài khoản</h1>
+          <div class="space-x-2">
+            <button id="backBtn" class="px-3 py-1 bg-gray-200 hover:bg-gray-300 rounded">Quay lại</button>
+          </div>
+        </div>
+        <div id="msg" class="text-sm mb-3"></div>
+
+        <!-- Profile section -->
+        <section id="sectionProfile" class="space-y-3">
+          <div>
+            <label class="text-sm">Tên đăng nhập</label>
+            <div id="username" class="p-2 border rounded bg-gray-50"></div>
+          </div>
+          <div>
+            <label class="text-sm">Email</label>
+            <div id="email" class="p-2 border rounded bg-gray-50"></div>
+          </div>
+          <div>
+            <label class="text-sm">Họ và tên</label>
+            <input id="full_name" class="w-full px-3 py-2 border rounded" />
+          </div>
+          <div>
+            <label class="text-sm">Số điện thoại</label>
+            <input id="phone" class="w-full px-3 py-2 border rounded" />
+          </div>
+          <div>
+            <label class="text-sm">Giới tính</label>
+            <select id="gender" class="w-full px-3 py-2 border rounded">
+              <option value="">Chọn</option>
+              <option value="male">Nam</option>
+              <option value="female">Nữ</option>
+              <option value="other">Khác</option>
+            </select>
+          </div>
+          <div>
+            <label class="text-sm">Ngày sinh</label>
+            <input id="dob" type="date" class="w-full px-3 py-2 border rounded" />
+          </div>
+          <div class="flex justify-end space-x-3 mt-4">
+            <button id="saveProfile" class="px-4 py-2 bg-blue-600 text-white rounded">Lưu</button>
+          </div>
+        </section>
+
+        <!-- Address section (hidden by default) -->
+        <section id="sectionAddress" class="space-y-3 hidden">
+          <div>
+            <label class="text-sm">Tỉnh/Thành phố</label>
+            <input id="city" class="w-full px-3 py-2 border rounded" />
+          </div>
+          <div>
+            <label class="text-sm">Quận/Huyện</label>
+            <input id="district" class="w-full px-3 py-2 border rounded" />
+          </div>
+          <div>
+            <label class="text-sm">Xã/Phường</label>
+            <input id="commune" class="w-full px-3 py-2 border rounded" />
+          </div>
+          <div>
+            <label class="text-sm">Số nhà</label>
+            <input id="house_number" class="w-full px-3 py-2 border rounded" />
+          </div>
+          <div>
+            <label class="text-sm">Địa chỉ</label>
+            <input id="address_line" class="w-full px-3 py-2 border rounded" />
+          </div>
+          <div>
+            <label class="text-sm">Mô tả thêm</label>
+            <input id="address_note" class="w-full px-3 py-2 border rounded" />
+          </div>
+          <!-- postal_code removed per request -->
+          <div class="flex justify-end space-x-3 mt-4">
+            <button id="saveAddress" class="px-4 py-2 bg-blue-600 text-white rounded">Lưu</button>
+          </div>
+        </section>
+
+        <!-- Credentials section (hidden by default) -->
+        <section id="sectionCredentials" class="space-y-3 hidden">
+          <!-- Change username -->
+          <div class="border-b pb-3">
+            <label class="text-sm">Đổi tên đăng nhập</label>
+            <input id="newUsername" class="w-full px-3 py-2 border rounded mt-1" placeholder="Tên đăng nhập mới" />
+            <div class="flex justify-end mt-3">
+              <button id="saveUsername" class="px-4 py-2 bg-blue-600 text-white rounded">Lưu tên đăng nhập</button>
+            </div>
+          </div>
+
+          <!-- Change password -->
+          <div class="pt-3">
+            <label class="text-sm">Mật khẩu hiện tại</label>
+            <input id="currentPassword" type="password" class="w-full px-3 py-2 border rounded mt-1" />
+            <label class="text-sm mt-2">Mật khẩu mới</label>
+            <input id="newPassword" type="password" class="w-full px-3 py-2 border rounded mt-1" />
+            <div class="flex items-center space-x-2 mt-2">
+              <input id="sendConfirmationEmail" type="checkbox" />
+              <label class="text-sm">Gửi email xác nhận đến địa chỉ đã đăng ký</label>
+            </div>
+            <div class="flex justify-end mt-3">
+              <button id="savePassword" class="px-4 py-2 bg-blue-600 text-white rounded">Lưu mật khẩu</button>
+            </div>
+          </div>
+        </section>
+
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const params = new URLSearchParams(window.location.search);
+    const id = params.get('id');
+  const token = localStorage.getItem('token');
+    if (!token || !id) { window.location = '/'; }
+
+    const headers = { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` };
+
+    // loadProfile defined below (single definition)
+
+    // Tab wiring
+    const tabProfile = document.getElementById('tabProfile');
+    const tabAddress = document.getElementById('tabAddress');
+    const tabCredentials = document.getElementById('tabCredentials');
+    const sectionProfile = document.getElementById('sectionProfile');
+    const sectionAddress = document.getElementById('sectionAddress');
+    const sectionCredentials = document.getElementById('sectionCredentials');
+
+    function showSection(s) {
+      sectionProfile.classList.add('hidden');
+      sectionAddress.classList.add('hidden');
+      sectionCredentials.classList.add('hidden');
+      s.classList.remove('hidden');
+    }
+
+    tabProfile.addEventListener('click', () => showSection(sectionProfile));
+    tabAddress.addEventListener('click', () => showSection(sectionAddress));
+    tabCredentials.addEventListener('click', () => showSection(sectionCredentials));
+
+    // Load profile into all sections
+    async function loadProfile() {
+      try {
+        const res = await fetch(`/api/user/${id}`, { headers });
+        if (!res.ok) throw new Error('failed');
+        const data = await res.json();
+        // populate visible fields
+        document.getElementById('username').textContent = data.username || '';
+        document.getElementById('email').textContent = data.email || '';
+        document.getElementById('full_name').value = data.full_name || '';
+        document.getElementById('phone').value = data.phone || '';
+        document.getElementById('gender').value = data.gender || '';
+        document.getElementById('dob').value = data.dob ? data.dob.split('T')[0] : '';
+  document.getElementById('city').value = data.city || '';
+  document.getElementById('district').value = data.district || '';
+  document.getElementById('commune').value = data.commune || '';
+  document.getElementById('house_number').value = data.house_number || '';
+  document.getElementById('address_line').value = data.address_line || '';
+  document.getElementById('address_note').value = data.address_note || '';
+      } catch (err) {
+        document.getElementById('msg').textContent = 'Không thể tải thông tin.';
+      }
+    }
+
+    // Save profile (personal info)
+    document.getElementById('saveProfile').addEventListener('click', async () => {
+      const payload = {
+        full_name: document.getElementById('full_name').value.trim(),
+        phone: document.getElementById('phone').value.trim(),
+        gender: document.getElementById('gender').value,
+        dob: document.getElementById('dob').value || null
+      };
+      try {
+        const res = await fetch(`/api/user/${id}`, { method: 'PUT', headers, body: JSON.stringify(payload) });
+        const data = await res.json();
+        if (res.ok) {
+          document.getElementById('msg').className = 'text-green-600 mb-3';
+          document.getElementById('msg').textContent = 'Lưu hồ sơ thành công.';
+        } else {
+          document.getElementById('msg').className = 'text-red-600 mb-3';
+          document.getElementById('msg').textContent = data.message || 'Lưu thất bại.';
+        }
+      } catch (err) {
+        document.getElementById('msg').className = 'text-red-600 mb-3';
+        document.getElementById('msg').textContent = 'Lỗi kết nối.';
+      }
+    });
+
+    // Save address
+    document.getElementById('saveAddress').addEventListener('click', async () => {
+      const payload = {
+        city: document.getElementById('city').value.trim(),
+        district: document.getElementById('district').value.trim(),
+        commune: document.getElementById('commune').value.trim(),
+        house_number: document.getElementById('house_number').value.trim(),
+        address_line: document.getElementById('address_line').value.trim(),
+        address_note: document.getElementById('address_note').value.trim()
+      };
+      try {
+        const res = await fetch(`/api/user/${id}`, { method: 'PUT', headers, body: JSON.stringify(payload) });
+        const data = await res.json();
+        if (res.ok) {
+          document.getElementById('msg').className = 'text-green-600 mb-3';
+          document.getElementById('msg').textContent = 'Lưu địa chỉ thành công.';
+        } else {
+          document.getElementById('msg').className = 'text-red-600 mb-3';
+          document.getElementById('msg').textContent = data.message || 'Lưu thất bại.';
+        }
+      } catch (err) {
+        document.getElementById('msg').className = 'text-red-600 mb-3';
+        document.getElementById('msg').textContent = 'Lỗi kết nối.';
+      }
+    });
+
+    // Save username (separate)
+    document.getElementById('saveUsername').addEventListener('click', async () => {
+      const payload = { newUsername: document.getElementById('newUsername').value.trim() || undefined, sendConfirmationEmail: false };
+      try {
+        const res = await fetch(`/api/user/${id}/credentials`, { method: 'POST', headers, body: JSON.stringify(payload) });
+        const data = await res.json();
+        if (res.ok) {
+          document.getElementById('msg').className = 'text-green-600 mb-3';
+          document.getElementById('msg').textContent = 'Tên đăng nhập đã được cập nhật.';
+          await loadProfile();
+        } else {
+          document.getElementById('msg').className = 'text-red-600 mb-3';
+          document.getElementById('msg').textContent = data.message || 'Cập nhật thất bại.';
+        }
+      } catch (err) {
+        document.getElementById('msg').className = 'text-red-600 mb-3';
+        document.getElementById('msg').textContent = 'Lỗi kết nối.';
+      }
+    });
+
+    // Save password (separate)
+    document.getElementById('savePassword').addEventListener('click', async () => {
+      const payload = {
+        currentPassword: document.getElementById('currentPassword').value,
+        newPassword: document.getElementById('newPassword').value,
+        sendConfirmationEmail: document.getElementById('sendConfirmationEmail').checked
+      };
+      try {
+        const res = await fetch(`/api/user/${id}/credentials`, { method: 'POST', headers, body: JSON.stringify(payload) });
+        const data = await res.json();
+        if (res.ok) {
+          document.getElementById('msg').className = 'text-green-600 mb-3';
+          document.getElementById('msg').textContent = 'Mật khẩu đã được cập nhật.';
+        } else {
+          document.getElementById('msg').className = 'text-red-600 mb-3';
+          document.getElementById('msg').textContent = data.message || 'Cập nhật thất bại.';
+        }
+      } catch (err) {
+        document.getElementById('msg').className = 'text-red-600 mb-3';
+        document.getElementById('msg').textContent = 'Lỗi kết nối.';
+      }
+    });
+
+    document.getElementById('backBtn').addEventListener('click', () => { window.location = '/home.html'; });
+
+    // show profile by default
+    showSection(sectionProfile);
+    loadProfile();
+  </script>
+</body>
+</html>

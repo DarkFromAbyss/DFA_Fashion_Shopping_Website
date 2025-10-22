@@ -245,8 +245,14 @@
                 });
                 const data = await res.json();
                 if (res.ok) {
+                    // store token and userId (demo token)
+                    try {
+                        localStorage.setItem('token', data.token || 'fake-jwt-token');
+                        localStorage.setItem('userId', data.userId);
+                    } catch (e) {}
                     closeModal(loginModal);
-                    updateMessage('Đăng nhập thành công!', 'text-green-600');
+                    // redirect to home
+                    window.location = '/home.html';
                 } else {
                     loginMsg.textContent = data.message || 'Đăng nhập thất bại.';
                 }

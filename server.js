@@ -47,6 +47,17 @@ async function initializeDb() {
         username VARCHAR(50) UNIQUE NOT NULL,
         email VARCHAR(100) UNIQUE,
         password_hash VARCHAR(255) NOT NULL,
+        full_name VARCHAR(200),
+        phone VARCHAR(50),
+        gender VARCHAR(20),
+        dob DATE,
+        city VARCHAR(100),
+        district VARCHAR(100),
+        commune VARCHAR(100),
+        house_number VARCHAR(100),
+        address_line VARCHAR(255),
+        address_note TEXT,
+        postal_code VARCHAR(50),
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       );
     `);
@@ -61,6 +72,23 @@ async function initializeDb() {
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       );
     `);
+    // Ensure profile columns exist on users table for upgrades from older schemas
+    try {
+      await client.query("ALTER TABLE users ADD COLUMN IF NOT EXISTS full_name VARCHAR(200);");
+      await client.query("ALTER TABLE users ADD COLUMN IF NOT EXISTS phone VARCHAR(50);");
+      await client.query("ALTER TABLE users ADD COLUMN IF NOT EXISTS gender VARCHAR(20);");
+      await client.query("ALTER TABLE users ADD COLUMN IF NOT EXISTS dob DATE;");
+           await client.query("ALTER TABLE users ADD COLUMN IF NOT EXISTS city VARCHAR(100);");
+           await client.query("ALTER TABLE users ADD COLUMN IF NOT EXISTS district VARCHAR(100);");
+           await client.query("ALTER TABLE users ADD COLUMN IF NOT EXISTS commune VARCHAR(100);");
+           await client.query("ALTER TABLE users ADD COLUMN IF NOT EXISTS house_number VARCHAR(100);");
+           await client.query("ALTER TABLE users ADD COLUMN IF NOT EXISTS address_line VARCHAR(255);");
+           await client.query("ALTER TABLE users ADD COLUMN IF NOT EXISTS address_note TEXT;");
+           await client.query("ALTER TABLE users ADD COLUMN IF NOT EXISTS postal_code VARCHAR(50);");
+    } catch (e) {
+      // non-fatal, log and continue
+      console.warn('DB alter columns warning:', e.message || e);
+    }
     client.release();
     console.log('Postgres: users table ready');
   } catch (err) {
@@ -118,6 +146,111 @@ app.post('/api/login', async (req, res) => {
   } catch (err) {
     console.error('Login error:', err.message || err);
     res.status(500).json({ message: 'internal error' });
+  }
+});
+
+// Simple middleware for demo auth: checks for header Authorization: Bearer fake-jwt-token
+function demoAuth(req, res, next) {
+  const auth = req.headers['authorization'] || '';
+  if (!auth.startsWith('Bearer ')) return res.status(401).json({ message: 'missing token' });
+  const token = auth.slice(7);
+  if (token !== 'fake-jwt-token') return res.status(401).json({ message: 'invalid token' });
+  // For demo, allow userId via query/header/body when needed. In real app decode JWT.
+  next();
+}
+
+// Get current user profile (demo auth)
+app.get('/api/user/:id', demoAuth, async (req, res) => {
+  try {
+    const id = Number(req.params.id);
+    const result = await pool.query('SELECT id, username, email, full_name, phone, gender, dob, city, district, commune, house_number, address_line, address_note, postal_code FROM users WHERE id = $1', [id]);
+    if (result.rows.length === 0) return res.status(404).json({ message: 'user not found' });
+    res.json(result.rows[0]);
+  } catch (err) {
+    console.error('Get user error:', err.message || err);
+    res.status(500).json({ message: 'internal error' });
+  }
+});
+
+// Update current user profile (demo auth)
+app.put('/api/user/:id', demoAuth, async (req, res) => {
+  try {
+    const id = Number(req.params.id);
+    const { full_name, phone, gender, dob } = req.body || {};
+    const { city, district, commune, house_number, address_line, address_note, postal_code } = req.body || {};
+    await pool.query(
+      'UPDATE users SET full_name = $1, phone = $2, gender = $3, dob = $4, city = $5, district = $6, commune = $7, house_number = $8, address_line = $9, address_note = $10, postal_code = $11 WHERE id = $12',
+      [full_name || null, phone || null, gender || null, dob || null, city || null, district || null, commune || null, house_number || null, address_line || null, address_note || null, postal_code || null, id]
+    );
+    const result = await pool.query('SELECT id, username, email, full_name, phone, gender, dob, city, district, commune, house_number, address_line, address_note, postal_code FROM users WHERE id = $1', [id]);
+    res.json(result.rows[0]);
+  } catch (err) {
+    console.error('Update user error:', err.message || err);
+    res.status(500).json({ message: 'internal error' });
+  }
+});
+
+// Change credentials: username/password (and optionally resend confirmation email)
+app.post('/api/user/:id/credentials', demoAuth, async (req, res) => {
+  try {
+    const id = Number(req.params.id);
+    const { currentPassword, newPassword, newUsername, sendConfirmationEmail } = req.body || {};
+    // fetch user
+    const ures = await pool.query('SELECT id, username, email, password_hash FROM users WHERE id = $1', [id]);
+    if (ures.rows.length === 0) return res.status(404).json({ message: 'user not found' });
+    const user = ures.rows[0];
+
+    // if changing password, verify currentPassword
+    if (newPassword) {
+      if (!currentPassword) return res.status(400).json({ message: 'currentPassword required to change password' });
+      const ok = await bcrypt.compare(currentPassword, user.password_hash);
+      if (!ok) return res.status(401).json({ message: 'current password incorrect' });
+      const hash = await bcrypt.hash(newPassword, BCRYPT_ROUNDS);
+      await pool.query('UPDATE users SET password_hash = $1 WHERE id = $2', [hash, id]);
+    }
+
+    // change username if requested
+    if (newUsername) {
+      await pool.query('UPDATE users SET username = $1 WHERE id = $2', [newUsername, id]);
+    }
+
+    // optional: send confirmation email
+    if (sendConfirmationEmail && user.email) {
+      try {
+        let transporter;
+        if (process.env.SMTP_HOST) {
+          transporter = nodemailer.createTransport({
+            host: process.env.SMTP_HOST,
+            port: process.env.SMTP_PORT ? Number(process.env.SMTP_PORT) : 587,
+            secure: process.env.SMTP_SECURE === 'true',
+            auth: process.env.SMTP_USER ? { user: process.env.SMTP_USER, pass: process.env.SMTP_PASS } : undefined,
+          });
+        } else {
+          const testAccount = await nodemailer.createTestAccount();
+          transporter = nodemailer.createTransport({
+            host: testAccount.smtp.host,
+            port: testAccount.smtp.port,
+            secure: testAccount.smtp.secure,
+            auth: { user: testAccount.user, pass: testAccount.pass }
+          });
+        }
+        const info = await transporter.sendMail({
+          from: process.env.EMAIL_FROM || 'no-reply@example.com',
+          to: user.email,
+          subject: 'Xác nhận thay đổi thông tin',
+          text: 'Thông tin đăng nhập của bạn đã được cập nhật.',
+          html: '<p>Thông tin đăng nhập của bạn đã được cập nhật.</p>'
+        });
+        console.log('Credentials change email sent:', nodemailer.getTestMessageUrl ? nodemailer.getTestMessageUrl(info) : info.messageId);
+      } catch (e) {
+        console.warn('Failed to send confirmation email:', e.message || e);
+      }
+    }
+
+    return res.json({ message: 'ok' });
+  } catch (err) {
+    console.error('Credentials change error:', err.message || err);
+    return res.status(500).json({ message: 'internal error' });
   }
 });
 
