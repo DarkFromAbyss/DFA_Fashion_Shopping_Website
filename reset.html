@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Reset mật khẩu</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="flex items-center justify-center min-h-screen bg-gray-100">
+  <div class="bg-white p-6 rounded shadow-md w-full max-w-md">
+    <h1 class="text-xl font-semibold mb-4">Đặt lại mật khẩu</h1>
+    <p id="msg" class="text-sm mb-4"></p>
+    <div id="form" class="space-y-3">
+      <input id="password" type="password" placeholder="Mật khẩu mới" class="w-full px-3 py-2 border rounded" />
+      <input id="password2" type="password" placeholder="Nhập lại mật khẩu" class="w-full px-3 py-2 border rounded" />
+      <div class="flex justify-end">
+        <button id="submit" class="px-4 py-2 bg-blue-600 text-white rounded">Đặt lại</button>
+      </div>
+    </div>
+    <p class="mt-4 text-xs text-gray-500">Sau khi đặt lại mật khẩu, bạn sẽ được chuyển về trang chủ và cần đăng nhập lại.</p>
+  </div>
+
+  <script>
+    const params = new URLSearchParams(window.location.search);
+    const token = params.get('token');
+    const msg = document.getElementById('msg');
+    const pwd = document.getElementById('password');
+    const pwd2 = document.getElementById('password2');
+    const submit = document.getElementById('submit');
+
+    if (!token) {
+      msg.textContent = 'Token không hợp lệ.';
+      document.getElementById('form').style.display = 'none';
+    }
+
+    submit.addEventListener('click', async () => {
+      if (pwd.value.length < 6) { msg.textContent = 'Mật khẩu phải có ít nhất 6 ký tự.'; return; }
+      if (pwd.value !== pwd2.value) { msg.textContent = 'Mật khẩu không khớp.'; return; }
+      submit.disabled = true; submit.textContent = 'Đang xử lý...';
+      try {
+        const res = await fetch('/api/reset-password', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ token, password: pwd.value })
+        });
+        const data = await res.json();
+        if (res.ok) {
+          msg.className = 'text-green-600 mb-4';
+          msg.textContent = 'Đặt lại mật khẩu thành công. Chuyển về trang chủ...';
+          setTimeout(() => { window.location = '/'; }, 2000);
+        } else {
+          msg.textContent = data.message || 'Lỗi khi đặt lại mật khẩu.';
+          submit.disabled = false; submit.textContent = 'Đặt lại';
+        }
+      } catch (err) {
+        msg.textContent = 'Lỗi kết nối tới máy chủ.';
+        submit.disabled = false; submit.textContent = 'Đặt lại';
+      }
+    });
+  </script>
+</body>
+</html>
